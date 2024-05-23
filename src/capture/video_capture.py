@@ -1,6 +1,10 @@
 # src/capture/video_capture.py
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 import cv2
+from src.detection.object_detection import detect_objects
 
 def capture_video():
     cap = cv2.VideoCapture(0)  # 0 for default camera
@@ -14,6 +18,9 @@ def capture_video():
         if not ret:
             print("Error: Could not read frame.")
             break
+
+        # Apply object detection
+        frame = detect_objects(frame)
 
         cv2.imshow('Video Feed', frame)
 
