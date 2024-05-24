@@ -1,2 +1,5 @@
 models/yolov3.weights filter=lfs diff=lfs merge=lfs -text
+<<<<<<< HEAD
 saved_model/frames_array.npy filter=lfs diff=lfs merge=lfs -text
+=======
+>>>>>>> 01eb1de (Add yolov3.weights to Git LFS)
