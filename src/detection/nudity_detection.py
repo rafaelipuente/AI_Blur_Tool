@@ -1,52 +1,37 @@
-# src/detection/nudity_detection.py
-
-from nudenet import NudeDetector
 import cv2
-import tempfile
-import os
+import torch
+from ultralytics import YOLO
 
-# Initialize the NudeDetector
-detector = NudeDetector()
+# Load the YOLO model
+model = YOLO('models/nudity_model/best.pt')  # Adjust the path if needed
 
 def detect_nudity(frame):
-    """
-    Detect nudity in the given video frame using NudeNet.
-
-    Parameters:
-    - frame: The video frame in which to detect nudity.
-
-    Returns:
-    - regions: List of bounding box coordinates for detected nudity regions.
-    """
-    # Convert the frame to RGB format expected by NudeNet
+    # Convert frame to RGB
     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    
-    # Use a temporary file to save the frame
-    temp_dir = tempfile.gettempdir()
-    temp_file_path = os.path.join(temp_dir, 'temp_frame.jpg')
-    
-    cv2.imwrite(temp_file_path, frame_rgb)
-    
-    # Perform nudity detection
-    results = detector.detect(temp_file_path)
-    
-    regions = []
-    height, width, _ = frame.shape
+
+    # Perform the detection
+    results = model(frame_rgb)
+
+    # Extract nudity regions (assuming results format provides bounding boxes)
+    nudity_regions = []
+    class_names = model.names
+
+    face_classes = [idx for idx, name in class_names.items() if 'FACE' in name]
+    print(f"Face classes: {face_classes}")  # Debug print
 
     for result in results:
-        x, y, w, h = result['box']
-        # Ensure width and height are positive
-        w = abs(w)
-        h = abs(h)
-        
-        # Filter out detections based on typical face region size and location
-        # This is a heuristic and might need adjustment based on your specific use case
-        if y > height / 3 and w > width / 10 and h > height / 10:
-            regions.append((int(x), int(y), int(w), int(h)))
-        else:
-            print(f"Skipping non-private region: {(x, y, w, h)}")
-    
-    # Clean up temporary file
-    os.remove(temp_file_path)
-    
-    return regions
+        for box in result.boxes:
+            cls_id = int(box.cls[0])
+            cls_name = class_names[cls_id]
+            x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().tolist()
+            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+            w = x2 - x1
+            h = y2 - y1
+            if cls_id not in face_classes:  # Skip faces
+                nudity_regions.append((x1, y1, w, h))
+                print(f"Nudity detected: Class ID: {cls_id}, Class name: {cls_name}, Region: {(x1, y1, w, h)}")  # Detailed log
+            else:
+                print(f"Face detected: Class ID: {cls_id}, Class name: {cls_name}, Region: {(x1, y1, w, h)}")  # Detailed log for faces
+
+    print(f"Final nudity regions: {nudity_regions}")  # Debug print for final nudity regions
+    return nudity_regions
