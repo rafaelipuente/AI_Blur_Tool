@@ -6,15 +6,16 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from src.detection.nudity_detection import detect_nudity
-from src.blurring.blur import apply_blur
+from src.blurring.blur import Blurring
 
 def capture_video():
     cap = cv2.VideoCapture(0)  # Change to appropriate video source
+    blurring = Blurring()
     frame_buffer = []
 
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640,480))
+    out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640, 480))
 
     try:
         while True:
@@ -27,7 +28,7 @@ def capture_video():
             print(f"Detected nudity regions: {nudity_regions}")
 
             # Apply blur to nudity regions
-            blurred_frame = apply_blur(frame, nudity_regions)
+            blurred_frame = blurring.apply_blur(frame, nudity_regions)
             frame_buffer.append(blurred_frame)
 
             # Write the frame into the file 'output.avi'
