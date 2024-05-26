@@ -1,0 +1,3 @@
+[submodule "models/NudeNet"]
+	path = models/NudeNet
+	url = https://github.com/YourUsername/NudeNet.git
